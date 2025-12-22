@@ -36,7 +36,16 @@ export default function History() {
       renderItem={({ item }) => (
         <View>
           <Text>{item.punch_type}</Text>
-          <Text>{new Date(item.punch_time).toLocaleString()}</Text>
+          <Text>{new Date(item.punch_time).toLocaleString('en-IN', {
+              timeZone: 'Asia/Kolkata',
+              hour: '2-digit',
+              minute: '2-digit',
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric'
+            })
+            }
+            </Text>
         </View>
       )}
     />
