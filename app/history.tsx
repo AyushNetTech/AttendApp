@@ -1,7 +1,6 @@
 import { View, Text, FlatList } from 'react-native'
 import { useEffect, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { api } from '../lib/api'
 import { supabase } from '@/lib/supabase'
 
 export default function History() {
