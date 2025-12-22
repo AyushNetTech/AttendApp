@@ -2,20 +2,33 @@ import { View, Text, FlatList } from 'react-native'
 import { useEffect, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { api } from '../lib/api'
+import { supabase } from '@/lib/supabase'
 
 export default function History() {
   const [rows, setRows] = useState<any[]>([])
 
   useEffect(() => {
-    AsyncStorage.getItem('employee_session').then(async s => {
-      const session = JSON.parse(s!)
-      const res = await fetch(
-        `${api}/attendance/history?employee_id=${session.employee_id}`
-      )
-      const data = await res.json()
-      setRows(data)
-    })
-  }, [])
+  (async () => {
+    const s = await AsyncStorage.getItem('employee')
+    if (!s) return
+
+    const session = JSON.parse(s)
+
+    const { data, error } = await supabase
+      .from('attendance')
+      .select('*')
+      .eq('employee_id', session.id)
+      .order('punch_time', { ascending: false })
+
+    if (error) {
+      console.log(error)
+      return
+    }
+
+    setRows(data || [])
+  })()
+}, [])
+
 
   return (
     <FlatList

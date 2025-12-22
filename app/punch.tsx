@@ -1,4 +1,4 @@
-import { View, Pressable, Text, ActivityIndicator, Alert } from 'react-native'
+import { View, Pressable, Text, ActivityIndicator, Alert, StyleSheet } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { useRef, useEffect, useState } from 'react'
@@ -32,9 +32,17 @@ export default function Punch() {
   return (
     <View style={{ flex: 1 }}>
       <CameraView ref={cameraRef} style={{ flex: 1 }} />
-      <Pressable onPress={capture}>
-        {loading ? <ActivityIndicator /> : <Text>Capture</Text>}
+      <Pressable onPress={capture} style={{height:100, display:"flex", alignItems:"center", justifyContent:"center",
+        
+      }}>
+        {loading ? <ActivityIndicator /> : <Text>Click Here</Text>}
       </Pressable>
     </View>
   )
 }
+
+const styles=StyleSheet.create({
+  Capbtn:{
+    height:200
+  }
+})
