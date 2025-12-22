@@ -1,63 +1,32 @@
-import { View, Text, FlatList} from 'react-native'
-import { supabase } from '../lib/supabase'
+import { View, Text, FlatList } from 'react-native'
 import { useEffect, useState } from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
-
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { api } from '../lib/api'
 
 export default function History() {
-  const [data, setData] = useState<any[]>([])
+  const [rows, setRows] = useState<any[]>([])
 
   useEffect(() => {
-    supabase
-      .from('attendance_logs')
-      .select('punched_at, punch_type')
-      .order('punched_at', { ascending: false })
-      .then(res => setData(res.data ?? []))
+    AsyncStorage.getItem('employee_session').then(async s => {
+      const session = JSON.parse(s!)
+      const res = await fetch(
+        `${api}/attendance/history?employee_id=${session.employee_id}`
+      )
+      const data = await res.json()
+      setRows(data)
+    })
   }, [])
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        backgroundColor: '#0f172a',
-        padding: 16
-      }}
-    >
-      <Text
-        style={{
-          color: '#fff',
-          fontSize: 20,
-          fontWeight: '600',
-          marginBottom: 12
-        }}
-      >
-        Punch History
-      </Text>
-
-      <FlatList
-        data={data}
-        keyExtractor={(_, i) => i.toString()}
-        ItemSeparatorComponent={() => (
-          <View style={{ height: 12 }} />
-        )}
-        renderItem={({ item }) => (
-          <View
-            style={{
-              backgroundColor: '#020617',
-              padding: 16,
-              borderRadius: 12
-            }}
-          >
-            <Text style={{ color: '#38bdf8', fontSize: 14 }}>
-              {item.punch_type}
-            </Text>
-
-            <Text style={{ color: '#e5e7eb', marginTop: 4 }}>
-              {new Date(item.punched_at).toLocaleString()}
-            </Text>
-          </View>
-        )}
-      />
-    </SafeAreaView>
+    <FlatList
+      data={rows}
+      keyExtractor={i => i.id}
+      renderItem={({ item }) => (
+        <View>
+          <Text>{item.punch_type}</Text>
+          <Text>{new Date(item.punch_time).toLocaleString()}</Text>
+        </View>
+      )}
+    />
   )
 }

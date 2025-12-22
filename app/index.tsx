@@ -1,30 +1,59 @@
 import { useState } from 'react'
-import {
-  Text,
-  TextInput,
-  Pressable,
-} from 'react-native'
+import { Text, TextInput, Pressable } from 'react-native'
 import { supabase } from '../lib/supabase'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export default function Login() {
-  const [email, setEmail] = useState('')
+  const [employeeCode, setEmployeeCode] = useState('')
   const [password, setPassword] = useState('')
   const router = useRouter()
 
   const login = async () => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    })
+  const { data: employee, error } = await supabase
+    .from('employees')
+    .select('id, company_id, employee_code, password, is_active')
+    .eq('employee_code', employeeCode)
+    .maybeSingle() // ✅ SAFE
 
-    if (error) {
-      alert(error.message)
-    } else {
-      router.replace('/home')
-    }
+  if (error) {
+    alert(error.message)
+    return
   }
+
+  if (!employee) {
+    alert('Invalid employee code')
+    return
+  }
+
+  if (!employee.is_active) {
+    alert('Employee is inactive')
+    return
+  }
+
+  if (!employee.password) {
+    alert('Password not set for this employee')
+    return
+  }
+
+  if (employee.password !== password) {
+    alert('Wrong password')
+    return
+  }
+
+  await AsyncStorage.setItem(
+    'employee',
+    JSON.stringify({
+      id: employee.id,
+      company_id: employee.company_id,
+      employee_code: employee.employee_code
+    })
+  )
+
+  router.replace('/home')
+}
+
 
   return (
     <SafeAreaView
@@ -47,11 +76,11 @@ export default function Login() {
       </Text>
 
       <TextInput
-        placeholder="Email"
+        placeholder="Employee Code"
         placeholderTextColor="#94a3b8"
         autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
+        value={employeeCode}
+        onChangeText={setEmployeeCode}
         style={{
           backgroundColor: '#1e293b',
           color: '#fff',
@@ -85,7 +114,9 @@ export default function Login() {
           alignItems: 'center'
         }}
       >
-        <Text style={{ color: '#fff', fontWeight: '600' }}>Login</Text>
+        <Text style={{ color: '#fff', fontWeight: '600' }}>
+          Login
+        </Text>
       </Pressable>
     </SafeAreaView>
   )

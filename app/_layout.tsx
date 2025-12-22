@@ -1,26 +1,22 @@
 import { Stack } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
 import { ActivityIndicator, View } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { syncOfflinePunches } from '../utils/syncOfflinePunches'
 
 export default function RootLayout() {
   const [loading, setLoading] = useState(true)
-  const [session, setSession] = useState<any>(null)
+  const [loggedIn, setLoggedIn] = useState(false)
 
   useEffect(() => {
     syncOfflinePunches()
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
+    AsyncStorage.getItem('employee').then(emp => {
+      setLoggedIn(!!emp)
       setLoading(false)
-    })
-
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
     })
   }, [])
 
@@ -35,13 +31,12 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <Stack screenOptions={{ headerShown: false }}>
-      {session ? (
-        <Stack.Screen name="home" />
-      ) : (
-        <Stack.Screen name="index" />
-      )}
-    </Stack>
+        {loggedIn ? (
+          <Stack.Screen name="home" />
+        ) : (
+          <Stack.Screen name="index" />
+        )}
+      </Stack>
     </SafeAreaProvider>
   )
-
 }

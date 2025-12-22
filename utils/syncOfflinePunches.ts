@@ -7,10 +7,10 @@ export async function syncOfflinePunches() {
   if (!net.isConnected) return
 
   const punches = await getOfflinePunches()
-  if (punches.length === 0) return
+  if (!punches.length) return
 
-  for (const punch of punches) {
-    await supabase.from('attendance_logs').insert(punch)
+  for (const p of punches) {
+    await supabase.from('attendance').insert(p)
   }
 
   await clearOfflinePunches()
