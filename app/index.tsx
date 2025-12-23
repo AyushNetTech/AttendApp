@@ -1,38 +1,53 @@
-import { useState } from 'react'
-import { Text, TextInput, Pressable } from 'react-native'
+import { useEffect, useState } from 'react'
+import { Text, TextInput, Pressable, ActivityIndicator } from 'react-native'
 import { supabase } from '../lib/supabase'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export default function Login() {
+  const router = useRouter()
+
   const [companyEmail, setCompanyEmail] = useState('')
   const [employeeCode, setEmployeeCode] = useState('')
   const [password, setPassword] = useState('')
-  const router = useRouter()
+  const [checkingSession, setCheckingSession] = useState(true)
+
+  // 🔐 CHECK LOGIN ON APP OPEN
+  useEffect(() => {
+    const checkSession = async () => {
+      const session = await AsyncStorage.getItem('employee')
+      if (session) {
+        router.replace('/home') // ✅ already logged in
+      }
+      setCheckingSession(false)
+    }
+
+    checkSession()
+  }, [])
 
   const login = async () => {
-    // 1️⃣ Find company by HR email
-    const { data: company, error: companyError } = await supabase
+    // 1️⃣ Find company
+    const { data: company } = await supabase
       .from('companies')
       .select('id')
-      .eq('owner_email', companyEmail)
+      .eq('owner_email', companyEmail.trim())
       .maybeSingle()
 
-    if (companyError || !company) {
+    if (!company) {
       alert('Invalid company email')
       return
     }
 
-    // 2️⃣ Find employee inside that company
-    const { data: employee, error: empError } = await supabase
+    // 2️⃣ Find employee
+    const { data: employee } = await supabase
       .from('employees')
       .select('id, employee_code, password, is_active')
       .eq('company_id', company.id)
-      .eq('employee_code', employeeCode)
+      .eq('employee_code', employeeCode.trim())
       .maybeSingle()
 
-    if (empError || !employee) {
+    if (!employee) {
       alert('Invalid employee code')
       return
     }
@@ -47,7 +62,7 @@ export default function Login() {
       return
     }
 
-    // 3️⃣ Save session
+    // 3️⃣ Save session (PERSISTENT)
     await AsyncStorage.setItem(
       'employee',
       JSON.stringify({
@@ -60,6 +75,16 @@ export default function Login() {
     router.replace('/home')
   }
 
+  // ⏳ Loader while checking session
+  if (checkingSession) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', backgroundColor: '#0f172a' }}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </SafeAreaView>
+    )
+  }
+
+  // 🔐 Login UI
   return (
     <SafeAreaView
       style={{
@@ -73,7 +98,6 @@ export default function Login() {
         Employee Login
       </Text>
 
-      {/* 🔑 Company Email */}
       <TextInput
         placeholder="Company Email (HR)"
         placeholderTextColor="#94a3b8"
@@ -89,7 +113,6 @@ export default function Login() {
         }}
       />
 
-      {/* 👤 Employee Code */}
       <TextInput
         placeholder="Employee Code"
         placeholderTextColor="#94a3b8"
@@ -105,7 +128,6 @@ export default function Login() {
         }}
       />
 
-      {/* 🔐 Password */}
       <TextInput
         placeholder="Password"
         placeholderTextColor="#94a3b8"
