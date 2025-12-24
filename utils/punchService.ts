@@ -11,6 +11,9 @@ export async function punchAttendance(type: 'IN' | 'OUT', photoUri: string) {
 
   const employee = JSON.parse(empRaw)
 
+  // 🔹 Capture punch time immediately
+  const punchTime = new Date().toISOString()
+
   const { status } = await Location.requestForegroundPermissionsAsync()
   if (status !== 'granted') throw new Error('Location denied')
 
@@ -23,9 +26,9 @@ export async function punchAttendance(type: 'IN' | 'OUT', photoUri: string) {
   )
 
   const filePath = `${employee.id}/${Date.now()}.jpg`
-
   const net = await NetInfo.fetch()
 
+  // 🔴 OFFLINE MODE
   if (!net.isConnected) {
     await saveOfflinePunch({
       employee_id: employee.id,
@@ -33,11 +36,14 @@ export async function punchAttendance(type: 'IN' | 'OUT', photoUri: string) {
       punch_type: type,
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,
-      photo_path: filePath
+      punch_time: punchTime,        // ✅ STORE REAL TIME
+      photo_path: filePath,
+      local_photo_uri: compressed.uri // ✅ STORE PHOTO URI
     })
     return
   }
 
+  // 🟢 ONLINE MODE
   const formData = new FormData()
   formData.append('file', {
     uri: compressed.uri,
@@ -55,6 +61,8 @@ export async function punchAttendance(type: 'IN' | 'OUT', photoUri: string) {
     punch_type: type,
     latitude: location.coords.latitude,
     longitude: location.coords.longitude,
+    punch_time: punchTime, // ✅ USE REAL TIME
     photo_path: filePath
   })
 }
+
