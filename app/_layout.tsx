@@ -11,9 +11,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     syncOfflinePunches()
-  }, [])
-
-  useEffect(() => {
     AsyncStorage.getItem('employee').then(emp => {
       setLoggedIn(!!emp)
       setLoading(false)
@@ -32,7 +29,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <Stack screenOptions={{ headerShown: false }}>
         {loggedIn ? (
-          <Stack.Screen name="home" />
+          <Stack.Screen name="(tabs)" />
         ) : (
           <Stack.Screen name="index" />
         )}
