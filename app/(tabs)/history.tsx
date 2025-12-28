@@ -48,11 +48,10 @@ export default function History() {
       flex: 1,
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: 80
     }}
   >
     <LottieView
-      source={require('../../assets/lottie/NoDataAvailableOops.json')}
+      source={require('../../assets/images/lottie/NoDataAvailableOops.json')}
       autoPlay
       loop
       style={{ width: 220, height: 220 }}
@@ -62,10 +61,10 @@ export default function History() {
       style={{
         color: '#94a3b8',
         fontSize: 16,
-        marginTop: 12
+        marginTop: 6
       }}
     >
-      No attendance records yet
+      No punches recorded in last 7 days
     </Text>
   </View>
 )
