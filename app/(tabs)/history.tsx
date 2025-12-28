@@ -67,23 +67,39 @@ export default function History() {
                     marginBottom: 10
                   }}
                 >
+                  {/* Punch Type */}
                   <Text
                     style={{
                       color: r.punch_type === 'IN' ? '#22c55e' : '#ef4444',
-                      fontWeight: '700'
+                      fontWeight: '700',
+                      fontSize: 16
                     }}
                   >
                     {r.punch_type}
                   </Text>
 
+                  {/* Time */}
                   <Text style={{ color: '#94a3b8', marginTop: 4 }}>
                     {new Date(r.punch_time).toLocaleTimeString('en-IN', {
                       hour: '2-digit',
                       minute: '2-digit'
                     })}
                   </Text>
+
+                  {/* 📍 Location */}
+                  <Text
+                    style={{
+                      color: '#cbd5f5',
+                      marginTop: 6,
+                      fontSize: 13
+                    }}
+                    numberOfLines={2}
+                  >
+                    📍 {r.location_text || 'Location unavailable'}
+                  </Text>
                 </View>
               ))}
+
             </View>
           )
         }}
