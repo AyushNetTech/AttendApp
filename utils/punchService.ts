@@ -6,6 +6,28 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { saveOfflinePunch } from './offlineQueue'
 
 export async function punchAttendance(type: 'IN' | 'OUT', photoUri: string) {
+
+  async function getLocationText(lat: number, lng: number): Promise<string> {
+  try {
+    const places = await Location.reverseGeocodeAsync({
+      latitude: lat,
+      longitude: lng
+    })
+
+    if (!places.length) return 'Unknown location'
+
+    const p = places[0]
+
+    return [
+      p.city,
+    ]
+      .filter(Boolean)
+      .join(', ')
+  } catch {
+    return 'Unknown location'
+  }
+}
+
   const empRaw = await AsyncStorage.getItem('employee')
   if (!empRaw) throw new Error('Not logged in')
 
@@ -18,11 +40,15 @@ export async function punchAttendance(type: 'IN' | 'OUT', photoUri: string) {
   if (status !== 'granted') throw new Error('Location denied')
 
   const location = await Location.getCurrentPositionAsync({})
+  const { latitude, longitude } = location.coords
+
+  const locationText = await getLocationText(latitude, longitude)
+
 
   const compressed = await ImageManipulator.manipulateAsync(
     photoUri,
     [],
-    { compress: 0.4, format: ImageManipulator.SaveFormat.JPEG }
+    { compress: 0.1, format: ImageManipulator.SaveFormat.JPEG }
   )
 
   const filePath = `${employee.id}/${Date.now()}.jpg`
@@ -36,6 +62,7 @@ export async function punchAttendance(type: 'IN' | 'OUT', photoUri: string) {
       punch_type: type,
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,
+      location_text: locationText,
       punch_time: punchTime,        // ✅ STORE REAL TIME
       photo_path: filePath,
       local_photo_uri: compressed.uri // ✅ STORE PHOTO URI
@@ -61,6 +88,7 @@ export async function punchAttendance(type: 'IN' | 'OUT', photoUri: string) {
     punch_type: type,
     latitude: location.coords.latitude,
     longitude: location.coords.longitude,
+    location_text: locationText,
     punch_time: punchTime, // ✅ USE REAL TIME
     photo_path: filePath
   })
