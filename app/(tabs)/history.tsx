@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { supabase } from '@/lib/supabase'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import LottieView from 'lottie-react-native'
+
 
 export default function History() {
   const [sections, setSections] = useState<any[]>([])
@@ -40,6 +42,35 @@ export default function History() {
     setSections(Object.entries(grouped))
   }
 
+  const EmptyHistory = () => (
+  <View
+    style={{
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 80
+    }}
+  >
+    <LottieView
+      source={require('../../assets/lottie/NoDataAvailableOops.json')}
+      autoPlay
+      loop
+      style={{ width: 220, height: 220 }}
+    />
+
+    <Text
+      style={{
+        color: '#94a3b8',
+        fontSize: 16,
+        marginTop: 12
+      }}
+    >
+      No attendance records yet
+    </Text>
+  </View>
+)
+
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#020617', padding: 16 }}>
       <Text style={{ fontSize: 22, fontWeight: '700', color: '#fff', marginBottom: 16 }}>
@@ -49,6 +80,10 @@ export default function History() {
       <FlatList
         data={sections}
         keyExtractor={item => item[0]}
+        ListEmptyComponent={EmptyHistory} 
+        contentContainerStyle={{
+            flexGrow: sections.length === 0 ? 1 : undefined // ✅ CENTER IT
+          }}
         renderItem={({ item }) => {
           const [date, rows] = item
           return (
