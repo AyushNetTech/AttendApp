@@ -48,7 +48,7 @@ export async function punchAttendance(type: 'IN' | 'OUT', photoUri: string) {
   const places = await Location.reverseGeocodeAsync({ latitude, longitude })
   const locationText =
     places.length
-      ? [places[0].city, places[0].region].filter(Boolean).join(', ')
+      ? [places[0].name, places[0].city].filter(Boolean).join(', ')
       : 'Unknown location'
 
   const formData = new FormData()
