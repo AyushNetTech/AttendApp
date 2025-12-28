@@ -7,33 +7,11 @@ import { saveOfflinePunch } from './offlineQueue'
 
 export async function punchAttendance(type: 'IN' | 'OUT', photoUri: string) {
 
-  async function getLocationText(lat: number, lng: number): Promise<string> {
-  try {
-    const places = await Location.reverseGeocodeAsync({
-      latitude: lat,
-      longitude: lng
-    })
-
-    if (!places.length) return 'Unknown location'
-
-    const p = places[0]
-
-    return [
-      p.city,
-    ]
-      .filter(Boolean)
-      .join(', ')
-  } catch {
-    return 'Unknown location'
-  }
-}
-
   const empRaw = await AsyncStorage.getItem('employee')
   if (!empRaw) throw new Error('Not logged in')
 
   const employee = JSON.parse(empRaw)
 
-  // 🔹 Capture punch time immediately
   const punchTime = new Date().toISOString()
 
   const { status } = await Location.requestForegroundPermissionsAsync()
@@ -41,9 +19,6 @@ export async function punchAttendance(type: 'IN' | 'OUT', photoUri: string) {
 
   const location = await Location.getCurrentPositionAsync({})
   const { latitude, longitude } = location.coords
-
-  const locationText = await getLocationText(latitude, longitude)
-
 
   const compressed = await ImageManipulator.manipulateAsync(
     photoUri,
@@ -54,23 +29,28 @@ export async function punchAttendance(type: 'IN' | 'OUT', photoUri: string) {
   const filePath = `${employee.id}/${Date.now()}.jpg`
   const net = await NetInfo.fetch()
 
-  // 🔴 OFFLINE MODE
+  // 🔴 OFFLINE MODE → NO location_text
   if (!net.isConnected) {
     await saveOfflinePunch({
       employee_id: employee.id,
       company_id: employee.company_id,
       punch_type: type,
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-      location_text: locationText,
-      punch_time: punchTime,        // ✅ STORE REAL TIME
+      latitude,
+      longitude,
+      punch_time: punchTime,
       photo_path: filePath,
-      local_photo_uri: compressed.uri // ✅ STORE PHOTO URI
+      local_photo_uri: compressed.uri
     })
     return
   }
 
-  // 🟢 ONLINE MODE
+  // 🟢 ONLINE MODE → reverse geocode here
+  const places = await Location.reverseGeocodeAsync({ latitude, longitude })
+  const locationText =
+    places.length
+      ? [places[0].city, places[0].region].filter(Boolean).join(', ')
+      : 'Unknown location'
+
   const formData = new FormData()
   formData.append('file', {
     uri: compressed.uri,
@@ -86,11 +66,10 @@ export async function punchAttendance(type: 'IN' | 'OUT', photoUri: string) {
     employee_id: employee.id,
     company_id: employee.company_id,
     punch_type: type,
-    latitude: location.coords.latitude,
-    longitude: location.coords.longitude,
+    latitude,
+    longitude,
     location_text: locationText,
-    punch_time: punchTime, // ✅ USE REAL TIME
+    punch_time: punchTime,
     photo_path: filePath
   })
 }
-
